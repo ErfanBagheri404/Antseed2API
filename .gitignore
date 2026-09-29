@@ -1,0 +1,11 @@
+# Antseed2Proxy — proxy + buyer launcher
+__pycache__/
+*.pyc
+*.log
+*.bak*
+
+build/
+dist/
+*.spec
+
+antseed2proxy.json
