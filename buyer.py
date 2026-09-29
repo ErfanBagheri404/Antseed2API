@@ -71,10 +71,11 @@ def identity_hex() -> str:
     blob = enc_path.read_bytes()
     if blob[:3] != b"v10":
         raise BuyerUnavailable("identity.enc is not a v10 safeStorage blob")
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
+    try:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    except ImportError as e:  # frozen exe built without the package
+        raise BuyerUnavailable("cannot decrypt identity.enc: %s (pip install cryptography)" % e)
     return AESGCM(master).decrypt(blob[3:15], blob[15:], None).decode().removeprefix("0x")
-
 
 def is_up(timeout=3) -> bool:
     s = socket.socket()

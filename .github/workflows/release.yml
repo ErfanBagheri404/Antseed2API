@@ -82,7 +82,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install PyInstaller
-        run: python -m pip install --upgrade pip pyinstaller
+        run: python -m pip install --upgrade pip -r requirements-build.txt
 
       - name: Build binary
         # --specpath must stay the repo root: PyInstaller resolves --add-data
