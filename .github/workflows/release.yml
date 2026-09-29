@@ -3,6 +3,7 @@ name: Release
 # Every push to master bumps the patch version, tags it, builds a standalone
 # binary for each OS with PyInstaller, and publishes a GitHub Release.
 on:
+  workflow_dispatch:
   push:
     branches: [master]
     paths-ignore:
