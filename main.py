@@ -1,10 +1,11 @@
-"""Antseed2Proxy - OpenAI-compatible proxy for the AntSeed AI VPN buyer node.
+"""Antseed2Proxy - OpenAI-compatible proxy for the AntSeed P2P model network.
 
-The AntSeed desktop app runs a local buyer proxy on 127.0.0.1:8377 that
-speaks OpenAI chat completions. This project wraps that endpoint with the
-family shape (menu CLI, health checks, model catalog, optional API key).
+Runs its own buyer node (no AntSeed desktop app needed): `node.mjs` joins the
+BitTorrent DHT, discovers sellers advertising `antseed:*` services, and forwards
+chat completions over the P2P channel. This process then wraps that endpoint
+with the family shape (menu CLI, health checks, model catalog, optional key).
 
-Upstream: http://127.0.0.1:8377/v1  (AntSeed buyer node, must be running)
+Upstream: http://127.0.0.1:8377/v1  (buyer node, auto-started with the server)
 """
 import argparse
 import json
@@ -19,7 +20,7 @@ from version import __version__
 BANNER = r"""
 +=====================================================+
 |              Antseed2Proxy  v{ver:<6}              |
-|   OpenAI-compatible proxy for AntSeed AI VPN       |
+|   OpenAI-compatible proxy for AntSeed P2P models  |
 |   Upstream: 127.0.0.1:8377/v1 (buyer node)         |
 +====================================================+
 """.format(ver=__version__)
@@ -82,9 +83,9 @@ def cmd_status():
         print("  Buyer      : connected")
         print("  DHT nodes  :", data.get("dhtNodeCount"))
         print("  Peers      :", data.get("peerCount"))
-        print("  Uptime     :", round((data.get("uptimeMs") or 0) / 1000), "s")
+        print("  Models     :", data.get("modelCount"), "| free:", data.get("freeCount"))
     else:
-        print("  Buyer      : DOWN  (start it with launch_buyer.py, or via the AntSeed app)")
+        print("  Buyer      : DOWN  (start server to auto-start it, or run: py buyer.py)")
         print("  Detail     :", (raw or "")[:200])
 
 
@@ -94,11 +95,12 @@ def cmd_models():
         print("  Cannot reach buyer node:", (raw or "")[:200])
         return
     models = data.get("data", [])
-    free = [m for m in models if any("free" in p.get("categories", []) for p in m.get("peers", []))]
+    free = [m for m in models if (m.get("antseed", {}) or {}).get("free")]
     print(f"  {len(models)} models total, {len(free)} free:")
-    for m in models:
-        tag = " [FREE]" if m in free else ""
-        print(f"    - {m.get('id')}{tag}")
+    for m in free:
+        print(f"    - {m.get('id')}")
+    if len(models) > len(free):
+        print(f"    ... plus {len(models) - len(free)} paid models (option 3 to list all)")
 
 
 def cmd_test_chat():
@@ -116,8 +118,19 @@ def cmd_test_chat():
         print("  usage:", usage)
 
 
+def ensure_buyer():
+    """Start the buyer node if it is not already listening."""
+    import buyer
+    try:
+        return buyer.start(wait=60)
+    except buyer.BuyerUnavailable as e:
+        print("  Buyer unavailable:", str(e)[:200])
+        return None
+
+
 def cmd_start_server(host, port, api_key, headless=False):
     from server import start_server
+    ensure_buyer()
     srv = start_server(host, port, api_key=api_key, upstream=DEFAULT_UPSTREAM)
     url = f"http://{host}:{port}"
     print(f"\n  Antseed2Proxy listening")

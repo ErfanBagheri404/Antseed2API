@@ -145,7 +145,10 @@ class Handler(BaseHTTPRequestHandler):
                 data = json.loads(body)
                 slim = [{"id": m.get("id"), "object": "model",
                          "created": m.get("created", int(time.time())),
-                         "owned_by": "antseed"}
+                         "owned_by": "antseed",
+                         # Keep the P2P metadata (tags/pricing) so clients can
+                         # tell free models from paid ones.
+                         "antseed": m.get("antseed")}
                         for m in data.get("data", [])]
                 return self._json(200, {"object": "list", "data": slim})
             except Exception as e:

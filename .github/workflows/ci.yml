@@ -18,3 +18,9 @@ jobs:
 
       - name: Run selfcheck
         run: python tests/selfcheck.py
+
+      - name: Compile all modules
+        run: python -m py_compile main.py server.py buyer.py version.py
+
+      - name: Check node.mjs syntax
+        run: node --check node.mjs

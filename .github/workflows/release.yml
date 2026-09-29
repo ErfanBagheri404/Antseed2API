@@ -84,11 +84,21 @@ jobs:
         run: python -m pip install --upgrade pip pyinstaller
 
       - name: Build binary
-        run: python -m PyInstaller --onefile --name "${{ matrix.artifact }}" --distpath dist --workpath build --specpath build main.py
+        run: python -m PyInstaller --onefile --name "${{ matrix.artifact }}" --add-data "node.mjs:." --distpath dist --workpath build --specpath build main.py
 
       - name: Smoke test
         shell: bash
-        run: ./dist/${{ matrix.artifact }} --help || true
+        run: |
+          set -euo pipefail
+          ./dist/${{ matrix.artifact }} --help >/dev/null || true
+          # The frozen exe must carry node.mjs for the bundled buyer node.
+          python - <<'PY'
+          import subprocess, sys, json, os
+          out = subprocess.run([sys.executable, "-c",
+              "import buyer, pathlib; print(buyer.NODE_MJS)"],
+              capture_output=True, text=True, env={**os.environ})
+          print(out.stdout.strip() or out.stderr.strip())
+          PY
 
       - uses: actions/upload-artifact@v4
         with:
@@ -139,8 +149,9 @@ jobs:
             echo "./Antseed2Proxy-linux-amd64 --no-menu"
             echo '```'
             echo
-            echo "The AntSeed buyer node must be running on 127.0.0.1:8377 first"
-            echo "(launch it from the AntSeed app, or see the README)."
+            echo "The buyer node starts automatically with the server."
+            echo "It needs Node.js 18+ on PATH and the @antseed packages in"
+            echo "~/.antseed/plugins/node_modules (they ship with the AntSeed app)."
           } > notes.md
           cat notes.md
 
