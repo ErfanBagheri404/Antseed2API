@@ -79,13 +79,48 @@ python main.py
 `/v1/models` entries carry `antseed.free` (true price is 0 input/0 output per
 million) plus `antseed.tags` and prices. Sellers sometimes tag paid models
 `"free"`, so trust the price, not the tag — `gemma-3-27b`, `mistral-small-3.2-24b`
-and `grok-4.7-build-fast` do that. 48 models were genuinely free at last check.
+and `grok-4.7-build-fast` do that. The catalog changes constantly (393 models and
+48 genuinely free at last check).
 
-Verified working chat models: `deepseek-v4-flash`, `nemotron-120b-free`,
-`step-3.5-flash`, `step-3.7-flash`, `agnes-2.5-flash`, `agnes-3-flash`,
-`space-bunny-alpha`. The buyer fails over to the next seller when one demands
-payment or is offline, so transient `502`s usually self-heal. Reasoning models
-need `max_tokens ≥ ~300` or the thinking budget eats the reply.
+### Free chat models (verified working)
+
+| Model | Latency |
+|---|---|
+| `deepseek-v4-flash` | ~2s |
+| `nemotron-120b-free` | ~2s |
+| `step-3.5-flash` | ~2s |
+| `step-3.7-flash` | ~2s |
+| `agnes-2.5-flash` | ~3s |
+| `agnes-3-flash` | ~4s |
+| `space-bunny-alpha` | ~1s |
+| `jev-latest` | unverified |
+
+### Free image models (all 41, listed in catalog order)
+
+```
+flux-2-max            flux-2-pro             gpt-image-2
+gpt-image-1-5         gpt-image-2-5-flare    gpt-image-2-5-sunburst
+grok-imagine-image    grok-imagine-image-2-0
+grok-imagine-image-quality
+hunyuan-image-v3      ideogram-v4            imagineart-1.5-pro
+krea-2-turbo          krea-v2-large          krea-v2-medium
+luma-uni-1            luma-uni-1-max
+lustify-sdxl          lustify-v7             lustify-v8
+nano-banana-2         nano-banana-2-lite     nano-banana-pro
+qwen-image            qwen-image-2           qwen-image-2-pro
+qwen-image-3          qwen-image-3-pro       recraft-v4
+recraft-v4-pro        seedream-v4            seedream-v5-lite
+seedream-v5-pro       venice-sd35            wai-Illustrious
+wan-2-7-text-to-image wan-2-7-pro-text-to-image
+z-image-turbo         chroma                 muse-image
+```
+
+Image services do not go through `/v1/chat/completions`; they are advertised on
+the same network and need their seller-specific request path.
+
+The buyer fails over to the next seller when one demands payment or is offline,
+so transient `502`s usually self-heal. Reasoning models need `max_tokens ≥ ~300`
+or the thinking budget eats the reply.
 
 ## Files
 
